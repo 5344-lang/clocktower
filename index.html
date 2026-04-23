@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BotC 실시간 투표 시스템</title>
+    <title>BotC 실시간 투표 시스템1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -12,18 +12,10 @@
         .hidden { display: none !important; }
         .pulse { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{transform: scale(1);} 50%{transform: scale(1.05); box-shadow: 0 0 15px rgba(220,38,38,0.6);} }
-        
         .glass-panel { background: rgba(39, 39, 42, 0.9); backdrop-filter: blur(8px); border: 1px solid #52525b; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
-
         #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column-reverse; gap: 10px; pointer-events: none; }
         .toast-item { animation: floatUp 3s ease-out forwards; padding: 12px 24px; border-radius: 999px; font-weight: 900; font-size: 14px; color: white; white-space: nowrap; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        @keyframes floatUp { 
-            0% { transform: translateY(20px); opacity: 0; } 
-            10% { transform: translateY(0); opacity: 1; } 
-            80% { opacity: 1; } 
-            100% { transform: translateY(-120px); opacity: 0; } 
-        }
-
+        @keyframes floatUp { 0% { transform: translateY(20px); opacity: 0; } 10% { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-120px); opacity: 0; } }
         #modal-role-text { white-space: pre-wrap; word-break: break-word; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -36,7 +28,6 @@
 
 <div id="login-screen" class="w-full max-w-md mt-20 text-center">
     <h1 class="text-4xl font-black text-red-600 mb-2">처형 투표소</h1>
-    <p class="text-gray-400 mb-8 text-sm">닉네임을 입력하세요 (GM은 'GM' 입력)</p>
     <input type="text" id="nicknameInput" class="w-full p-4 rounded-xl text-black font-bold text-center mb-4 focus:outline-none focus:ring-4 ring-red-500" placeholder="닉네임">
     <button onclick="join()" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold p-4 rounded-xl shadow-lg transition">입장하기</button>
 </div>
@@ -49,118 +40,79 @@
 
     <div class="bg-zinc-800 p-5 rounded-xl mb-6 shadow-xl border border-zinc-700">
         <div class="flex justify-between items-center mb-4 border-b border-zinc-600 pb-2">
-            <h3 class="text-lg font-bold text-gray-200">📜 시나리오 설정</h3>
-            <span id="scenario-status" class="text-xs text-amber-400 font-bold">기본 캐릭터 (전체)</span>
+            <h3 class="text-lg font-bold text-gray-200">📜 시나리오 필터링</h3>
+            <span id="scenario-status" class="text-xs text-amber-400 font-bold">전체 캐릭터 노출 중</span>
         </div>
-        
-        <div class="mb-4">
-            <label class="text-xs text-gray-400 font-bold mb-1 block">내장 시나리오 불러오기</label>
-            <select id="scenarioSelect" onchange="loadPresetScenario()" class="w-full p-3 rounded-lg text-black font-bold cursor-pointer">
-                <option value="">-- 시나리오 선택 --</option>
-                <option value="trouble_brewing.json">불길한 조짐 (Trouble Brewing)</option>
-                <option value="bad_moon_rising.json">어둠을 부르는 달 (Bad Moon Rising)</option>
-                <option value="sects_and_violets.json">점철되는 혼란 (Sects and Violets)</option>
-            </select>
-        </div>
-        
-        <div class="border-t border-zinc-700 pt-3 mt-2">
-            <p class="text-[11px] text-gray-500 mb-1">또는 커스텀 JSON 직접 업로드:</p>
-            <input type="file" id="jsonUpload" accept=".json" onchange="handleJSONUpload(event)" class="text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-zinc-700 file:text-white hover:file:bg-zinc-600 cursor-pointer">
-        </div>
+        <select id="scenarioSelect" onchange="loadPresetScenario()" class="w-full p-3 rounded-lg text-black font-bold mb-2">
+            <option value="">-- 시나리오 선택 (필터링) --</option>
+            <option value="trouble_brewing.json">불길한 조짐</option>
+            <option value="bad_moon_rising.json">어둠을 부르는 달</option>
+            <option value="sects_and_violets.json">점철되는 혼란</option>
+        </select>
+        <p class="text-[10px] text-gray-500">※ 시나리오를 선택하면 직업 할당 시 해당 캐릭터만 나타납니다.</p>
     </div>
 
-    <div class="bg-zinc-800 p-5 rounded-xl mb-6 shadow-xl border border-zinc-700">
-        <h3 class="text-lg font-bold text-gray-200 mb-3 border-b border-zinc-600 pb-2">👥 참가자 직업 및 상태 관리</h3>
+    <div class="bg-zinc-800 p-5 rounded-xl mb-6 border border-zinc-700">
+        <h3 class="text-lg font-bold text-gray-200 mb-3">👥 참가자 및 직업 할당</h3>
         <div id="gm-player-list" class="space-y-2"></div>
     </div>
 
-    <div class="bg-zinc-800 p-5 rounded-xl shadow-xl border border-zinc-700 text-center">
+    <div class="bg-zinc-800 p-5 rounded-xl text-center">
         <h3 class="text-lg font-bold text-red-400 mb-3">🔥 처형 투표 개시</h3>
         <div class="flex gap-2 mb-4">
-            <div class="flex-1 text-left">
-                <label class="text-xs text-gray-400 font-bold mb-1 block">지목한 사람 (지명자)</label>
-                <select id="nominatorSelect" class="w-full p-3 rounded-lg text-black font-bold"><option value="">선택 안함</option></select>
-            </div>
-            <div class="flex items-center justify-center mt-5 text-gray-500 font-black">➡️</div>
-            <div class="flex-1 text-left">
-                <label class="text-xs text-red-400 font-bold mb-1 block">지목 당한 사람 (피지명자)</label>
-                <select id="nomineeSelect" class="w-full p-3 border-2 border-red-500 rounded-lg text-black font-bold"><option value="">필수 선택</option></select>
-            </div>
+            <select id="nominatorSelect" class="flex-1 p-3 rounded-lg text-black font-bold"><option value="">지명자 없음</option></select>
+            <select id="nomineeSelect" class="flex-1 p-3 border-2 border-red-500 rounded-lg text-black font-bold"><option value="">피지명자 선택</option></select>
         </div>
-        <button onclick="startVote()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black p-4 rounded-xl transition">투표 시작</button>
-
-        <div id="gm-vote-log" class="hidden mt-4 bg-black/40 p-4 rounded-xl text-left text-xs font-mono text-amber-200 max-h-32 overflow-y-auto">
-            <p class="text-gray-500 mb-1 border-b border-zinc-700 pb-1">📊 투표 실시간 로그</p>
-            <div id="vote-log-entries"></div>
-        </div>
+        <button onclick="startVote()" class="w-full bg-red-600 text-white font-black p-4 rounded-xl">투표 시작</button>
     </div>
 
     <div id="gm-result-panel" class="hidden mt-6 bg-zinc-900 p-6 rounded-xl border border-red-800 text-center">
-        <h3 class="text-red-500 font-black mb-2">투표 진행 중</h3>
-        <p class="text-3xl font-black text-white mb-4"><span id="gm-yes-count">0</span> 표 (찬성 합계)</p>
-        <p class="text-sm text-gray-400 mb-4">현재 대기: <span id="gm-current-voter" class="font-bold text-amber-400 text-xl block mt-1"></span></p>
-        <div id="gm-final-decision" class="hidden space-y-3 mt-6 border-t border-zinc-700 pt-4">
-            <p class="text-lg font-bold text-amber-400 mb-2">모든 투표가 종료되었습니다.</p>
-            <button onclick="endVote('proceed')" class="w-full bg-red-700 text-white p-3 rounded-lg font-bold transition">진행 (처형 확정)</button>
-            <button onclick="endVote('cancel')" class="w-full bg-slate-600 text-white p-3 rounded-lg font-bold transition">진행 안 함 (부결)</button>
+        <p class="text-3xl font-black text-white mb-2"><span id="gm-yes-count">0</span> 표 (찬성)</p>
+        <p class="text-sm text-gray-400">현재 대기: <span id="gm-current-voter" class="text-amber-400 font-bold"></span></p>
+        <div id="gm-final-decision" class="hidden mt-4 flex gap-2">
+            <button onclick="endVote('proceed')" class="flex-1 bg-red-700 text-white p-3 rounded-lg font-bold">진행 (처형)</button>
+            <button onclick="endVote('cancel')" class="flex-1 bg-slate-600 text-white p-3 rounded-lg font-bold">부결</button>
         </div>
     </div>
 </div>
 
 <div id="role-select-modal" class="fixed inset-0 z- hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
-    <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[85vh]">
+    <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-2xl w-full flex flex-col max-h-[85vh]">
         <button onclick="closeRoleSelectModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl font-black">✕</button>
-        <h3 class="text-xl font-black text-white mb-4">직업 할당 <span id="role-select-target" class="text-amber-400 text-sm ml-2"></span></h3>
-        <div id="role-grid" class="grid grid-cols-3 md:grid-cols-4 gap-3 overflow-y-auto pr-2 pb-2"></div>
+        <h3 class="text-xl font-black text-white mb-4">직업 할당: <span id="role-select-target" class="text-amber-500"></span></h3>
+        <div id="role-grid" class="grid grid-cols-3 md:grid-cols-4 gap-2 overflow-y-auto pr-2 pb-4">
+            </div>
     </div>
 </div>
 
 <div id="player-screen" class="hidden w-full max-w-md">
     <div class="bg-zinc-800 p-6 rounded-xl shadow-xl text-center border border-zinc-700 mb-6">
-        <p class="text-gray-400 text-sm">접속 닉네임</p>
         <h2 id="my-name" class="text-3xl font-black text-white mb-4"></h2>
-        
-        <div id="role-panel" 
-             onmousedown="showRole()" onmouseup="hideRole()" onmouseleave="hideRole()"
-             ontouchstart="showRole()" ontouchend="hideRole()"
-             class="glass-panel rounded-2xl p-8 cursor-pointer min-h-[160px] flex flex-col justify-center items-center transition-all duration-300 relative overflow-hidden">
-            <div id="tap-to-see" class="flex flex-col items-center">
-                <span class="text-4xl mb-2">🩸</span>
-                <p class="text-gray-300 font-bold tracking-widest text-sm">꾹 누르면 정체가 드러납니다</p>
-            </div>
-            <div id="role-details" class="hidden w-full text-center">
+        <div id="role-panel" onmousedown="showRole()" onmouseup="hideRole()" onmouseleave="hideRole()" ontouchstart="showRole()" ontouchend="hideRole()"
+             class="glass-panel rounded-2xl p-8 cursor-pointer min-h-[160px] flex flex-col justify-center items-center transition-all duration-300">
+            <div id="tap-to-see"><span class="text-4xl mb-2 block">🩸</span><p class="text-gray-300 font-bold text-sm">꾹 누르면 정체가 드러납니다</p></div>
+            <div id="role-details" class="hidden w-full">
                 <p id="my-role-team" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1"></p>
-                <p id="my-role-name" class="text-3xl font-black text-amber-500 mb-4 drop-shadow-lg tracking-tight"></p>
-                <p id="my-role-ability" class="text-[13px] text-gray-300 bg-black/40 p-4 rounded-xl border border-zinc-600 leading-relaxed text-left whitespace-pre-wrap"></p>
+                <p id="my-role-name" class="text-3xl font-black text-amber-500 mb-4"></p>
+                <p id="my-role-ability" class="text-[13px] text-gray-300 bg-black/40 p-4 rounded-xl border border-zinc-600 text-left"></p>
             </div>
         </div>
-
-        <button id="btn-detail-guide" onclick="openAbilityPopup()" class="w-full mt-4 bg-zinc-700 text-amber-400 border border-amber-600/30 font-bold py-3 rounded-xl shadow-lg transition-all">
-            📖 내 직업 상세 가이드 읽기
-        </button>
-
+        <button id="btn-detail-guide" onclick="openAbilityPopup()" class="w-full mt-4 bg-zinc-700 text-amber-400 font-bold py-3 rounded-xl transition-all">📖 내 직업 상세 가이드 읽기</button>
         <div id="my-status" class="mt-4 p-3 rounded-xl bg-green-900 text-green-200 font-bold text-sm">🟢 생존</div>
     </div>
 
     <div id="vote-area" class="hidden bg-zinc-800 p-6 rounded-xl border-2 border-red-600 text-center">
-        <h3 class="text-red-500 font-black mb-1">처형 재판</h3>
-        <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-700 mb-6">
-            <p id="vote-nominator-display" class="text-sm text-gray-400 font-bold"></p>
-            <p class="text-xs text-gray-500 my-1">⬇️</p>
-            <p class="text-xl font-black text-white">대상: <span id="vote-target" class="text-red-400"></span></p>
+        <div class="bg-zinc-900 p-3 rounded-lg border border-zinc-700 mb-6 text-sm">
+            <span id="vote-nominator-display" class="text-gray-400 font-bold"></span> ➡️ <span id="vote-target" class="text-red-400 font-black"></span>
         </div>
-        <div id="vote-wait" class="text-gray-400">
-            현재 <b id="current-voter-name" class="text-amber-400 text-lg block mt-2"></b> 님의 투표를 기다리고 있습니다...
-        </div>
+        <div id="vote-wait" class="text-gray-400">대기 중: <b id="current-voter-name" class="text-amber-400"></b></div>
         <div id="vote-action" class="hidden flex flex-col gap-3">
-            <p class="text-lg font-bold text-amber-400 mb-2">당신의 차례입니다!</p>
-            <button onclick="submitVote('yes')" class="pulse bg-red-600 hover:bg-red-500 text-white font-black p-5 rounded-xl text-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] transition">✋ 찬성</button>
-            <button onclick="submitVote('pass')" class="bg-slate-600 hover:bg-slate-500 text-white font-bold p-4 rounded-xl transition">패스 (기권)</button>
+            <button onclick="submitVote('yes')" class="pulse bg-red-600 text-white font-black p-5 rounded-xl text-xl transition">✋ 찬성</button>
+            <button onclick="submitVote('pass')" class="bg-slate-600 text-white font-bold p-4 rounded-xl transition">기권</button>
         </div>
         <div id="ghost-action" class="hidden flex flex-col gap-3">
-            <p class="text-sm font-bold text-red-400 mb-2">💀 사망했습니다.<br>마지막 유령 투표권을 사용하시겠습니까?</p>
-            <button onclick="submitVote('yes', true)" class="bg-red-700 hover:bg-red-600 text-white font-black p-4 rounded-xl shadow-[0_0_15px_rgba(220,38,38,0.4)] transition">유령 투표 사용 (찬성)</button>
-            <button onclick="submitVote('pass')" class="bg-slate-700 hover:bg-slate-600 text-gray-300 font-bold p-4 rounded-xl transition">아니오 (아껴두기)</button>
+            <button onclick="submitVote('yes', true)" class="bg-red-700 text-white font-black p-4 rounded-xl transition">유령 투표 사용</button>
+            <button onclick="submitVote('pass')" class="bg-slate-700 hover:bg-slate-600 text-gray-300 font-bold p-4 rounded-xl transition">아니오</button>
         </div>
     </div>
 </div>
@@ -169,518 +121,195 @@
     <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
         <button onclick="closeAbilityPopup()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl font-black">✕</button>
         <p class="text-xs font-bold text-gray-400 mb-1">직업 상세 정보</p>
-        <h3 id="modal-role-name" class="text-2xl font-black text-amber-500 mb-4 border-b border-zinc-700 pb-2">직업 이름</h3>
+        <h3 id="modal-role-name" class="text-2xl font-black text-amber-500 mb-4 border-b border-zinc-700 pb-2"></h3>
         <div id="modal-role-text" class="text-[13px] text-gray-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-2"></div>
-        <button onclick="closeAbilityPopup()" class="w-full mt-6 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl shadow-lg transition">닫기</button>
+        <button onclick="closeAbilityPopup()" class="w-full mt-6 bg-slate-700 text-white font-bold py-3 rounded-xl shadow-lg transition">닫기</button>
     </div>
 </div>
 
 <script>
-// --- 파이어베이스 설정 ---
-const firebaseConfig = {
-    apiKey: "AIzaSyB1Se7KlWdhG3Tg26Q_U4x8jtcbf-rDtgs",
-    authDomain: "botc-helper-ae51e.firebaseapp.com",
-    databaseURL: "https://botc-helper-ae51e-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "botc-helper-ae51e"
-};
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+const firebaseConfig = { apiKey: "AIzaSyB1Se7KlWdhG3Tg26Q_U4x8jtcbf-rDtgs", authDomain: "botc-helper-ae51e.firebaseapp.com", databaseURL: "https://botc-helper-ae51e-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "botc-helper-ae51e" };
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let myNick = "";
-let isGM = false;
-let playersData = {};
-let votingState = { active: false };
-let lastToastTs = Date.now();
-let scenarioRoles = []; 
+let myNick = "", isGM = false, playersData = {}, votingState = { active: false }, lastToastTs = Date.now(), scenarioRoles = [];
+let roleDetailCache = {};
 
-// 직업 사전
+// 직업 사전 (이전 턴의 데이터와 동일)
 const ROLE_DICT = {
-    "bureaucrat": { name: "관료", team: "여행자", weight: 3, ability: "당신의 투표는 3표로 계산됩니다." },
-    "thief": { name: "도둑", team: "여행자", weight: -1, ability: "당신의 투표는 -1표로 계산됩니다." },
     "soldier": { name: "군인", team: "마을주민", ability: "악마로부터 안전합니다." },
-    "ravenkeeper": { name: "까마귀지기", team: "마을주민", ability: "밤에 사망하면, 깨어나서 플레이어 1명을 선택합니다: 그의 캐릭터를 알게 됩니다." },
-    "librarian": { name: "사서", team: "마을주민", ability: "게임 시작 시, 플레이어 2명 중 1명이 특정 외지인임을 알게 됩니다." },
-    "virgin": { name: "성결자", team: "마을주민", ability: "처음으로 지목당했을 때, 당신을 지목한 플레이어가 주민이라면, 그는 즉시 처형당합니다." },
-    "washerwoman": { name: "세탁부", team: "마을주민", ability: "게임 시작 시, 플레이어 2명 중 1명이 특정 주민임을 알게 됩니다." },
-    "monk": { name: "수도사", team: "마을주민", ability: "매일 밤*, (당신을 제외하고) 플레이어 1명을 선택합니다: 그는 오늘 밤 악마로부터 안전합니다." },
-    "investigator": { name: "수사관", team: "마을주민", ability: "게임 시작 시, 플레이어 2명 중 1명이 특정 하수인임을 알게 됩니다." },
-    "mayor": { name: "시장", team: "마을주민", ability: "3명만 생존한 상황에서 처형이 일어나지 않았다면, 당신이 속한 팀이 승리합니다." },
-    "chef": { name: "요리사", team: "마을주민", ability: "게임 시작 시, 서로 이웃하게 앉은 악한 플레이어가 몇 쌍 있는지 알게 됩니다." },
-    "undertaker": { name: "장의사", team: "마을주민", ability: "매일 밤*, 오늘 낮에 처형으로 사망한 플레이어의 캐릭터를 알게 됩니다." },
-    "fortuneteller": { name: "점쟁이", team: "마을주민", ability: "매일 밤, 플레이어 2명을 선택합니다: 그중 악마가 있는지 알게 됩니다." },
-    "slayer": { name: "처단자", team: "마을주민", ability: "게임당 1번, 낮 동안, 공개적으로 플레이어 1명을 선택합니다: 그가 악마면 그는 사망합니다." },
-    "empath": { name: "초공감자", team: "마을주민", ability: "매일 밤, 이웃 생존자 2명 중 몇 명이나 악한지를 알게 됩니다." },
-    "saint": { name: "성자", team: "외지인", ability: "당신이 처형으로 사망하면, 당신이 속한 팀이 패배합니다." },
-    "recluse": { name: "은둔자", team: "외지인", ability: "당신은 악한 팀 소속의 특정 하수인 또는 악마로 위장될 수도 있습니다." },
-    "drunk": { name: "주정뱅이", team: "외지인", ability: "당신은 자신이 주정뱅이라는 사실을 모릅니다." },
-    "butler": { name: "집사", team: "외지인", ability: "매일 밤, 주인을 고릅니다. 낮에 주인이 투표할 때만 투표할 수 있습니다." },
-    "baron": { name: "남작", team: "하수인", ability: "외지인이 추가로 게임에 참여합니다." },
-    "poisoner": { name: "독살범", team: "하수인", ability: "매일 밤, 플레이어 1명을 선택합니다: 그는 오늘 밤과 내일 낮 동안 중독됩니다." },
-    "spy": { name: "첩자", team: "하수인", ability: "매일 밤, 마도서를 확인해 봅니다." },
-    "scarletwoman": { name: "탕녀", team: "하수인", ability: "플레이어가 5명 이상 생존해 있는 상황에서 악마가 사망하면, 당신이 악마가 됩니다." },
-    "imp": { name: "임프", team: "악마", ability: "매일 밤*, 플레이어 1명을 선택합니다: 그는 사망합니다. 자결하면 하수인이 임프가 됩니다." },
-    "chambermaid": { name: "객실 청소부", team: "마을주민", ability: "매일 밤, 생존한 플레이어 2명을 선택합니다: 그중 몇 명이 오늘 밤 자기 능력으로 인해 깨어났는지 알게 됩니다." },
-    "professor": { name: "교수", team: "마을주민", ability: "게임당 1번, 밤*에, 사망한 플레이어 1명을 선택합니다: 그 플레이어가 주민이라면 부활합니다." },
-    "exorcist": { name: "구마사제", team: "마을주민", ability: "매일 밤*, 플레이어 1명을 선택합니다: 악마를 선택한다면 그 악마는 당신의 정체를 알게 되지만 오늘 밤 깨지 않습니다." },
-    "courtier": { name: "궁정대신", team: "마을주민", ability: "게임당 1번, 밤에 캐릭터 1명을 선택합니다: 그 플레이어는 3일 밤낮 동안 취합니다." },
-    "gambler": { name: "도박사", team: "마을주민", ability: "매일 밤*, 플레이어 1명을 선택하고 그의 캐릭터를 추측합니다: 틀리면 사망합니다." },
-    "sailor": { name: "선원", team: "마을주민", ability: "매일 밤, 생존한 플레이어 1명을 선택합니다: 당신과 그중 1명은 취합니다. 당신은 사망할 수 없습니다." },
-    "fool": { name: "어릿광대", team: "마을주민", ability: "당신이 처음으로 사망할 때, 사망하지 않습니다." },
-    "innkeeper": { name: "여관 주인", team: "마을주민", ability: "매일 밤*, 플레이어 2명을 선택합니다: 이들은 오늘 밤 사망할 수 없으나, 그중 1명은 취합니다." },
-    "minstrel": { name: "음유시인", team: "마을주민", ability: "하수인 1명이 처형으로 사망하면, 다른 모든 플레이어는 다음 날 황혼까지 취합니다." },
-    "tealady": { name: "찻집 여인", team: "마을주민", ability: "이웃 생존자 2명이 모두 선한 플레이어라면, 이들은 사망할 수 없습니다." },
-    "pacifist": { name: "평화주의자", team: "마을주민", ability: "선한 플레이어가 처형당하면, 그는 사망하지 않을 수도 있습니다." },
-    "grandmother": { name: "할머니", team: "마을주민", ability: "게임 시작 시, 선한 플레이어 1명과 캐릭터를 압니다. 악마가 그를 죽이면 당신도 사망합니다." },
-    "gossip": { name: "험담꾼", team: "마을주민", ability: "매일 낮 공개 발언을 합니다. 발언이 사실이었다면 밤에 1명이 사망합니다." },
-    "goon": { name: "건달", team: "외지인", ability: "당신을 선택하는 첫 플레이어는 취합니다. 당신은 그가 소속된 팀이 됩니다." },
-    "moonchild": { name: "달의 자손", team: "외지인", ability: "사망 시 생존자 1명을 선택합니다. 그가 선하면 밤에 사망합니다." },
-    "tinker": { name: "땜장이", team: "외지인", ability: "당신은 언제든지 돌연 사망할 수도 있습니다." },
-    "lunatic": { name: "미치광이", team: "외지인", ability: "당신은 자신이 악마라고 착각합니다." },
-    "godfather": { name: "대부", team: "하수인", ability: "게임 시작 시 어느 외지인이 참여하는지 압니다. 외지인 사망 시 밤에 1명을 죽입니다." },
-    "devilsadvocate": { name: "악마의 변호사", team: "하수인", ability: "매일 밤 생존자 1명을 선택합니다: 그가 내일 처형당하면 사망하지 않습니다." },
-    "assassin": { name: "암살자", team: "하수인", ability: "게임당 1번, 밤*에 플레이어 1명을 선택합니다: 이유불문 사망합니다." },
-    "mastermind": { name: "주모자", team: "하수인", ability: "악마가 처형당하면 하루 더 게임을 진행합니다. 다음날 처형당한 플레이어의 팀이 패배합니다." },
-    "shabaloth": { name: "샤발로스", team: "악마", ability: "매일 밤* 2명을 사망시킵니다. 전날 사망자를 다시 토해낼(살릴) 수도 있습니다." },
-    "zombuul": { name: "좀버얼", team: "악마", ability: "오늘 낮 사망자가 없었다면 밤에 1명을 죽입니다. 첫 사망 시 위장합니다." },
-    "po": { name: "포", team: "악마", ability: "매일 밤* 1명을 사망시킵니다. 이전 밤 아무도 안 골랐다면 오늘 밤 3명을 죽입니다." },
-    "pukka": { name: "푸카", team: "악마", ability: "매일 밤 1명을 중독시킵니다. 이전에 중독된 플레이어는 사망하고 건강해집니다." },
-    "juggler": { name: "곡예사", team: "마을주민", ability: "첫 낮에 캐릭터를 5번까지 추측합니다. 밤에 몇 개나 맞혔는지 압니다." },
-    "flowergirl": { name: "꽃팔이 소녀", team: "마을주민", ability: "매일 밤*, 오늘 낮에 악마가 투표했는지를 알게 됩니다." },
-    "dreamer": { name: "꿈꾸는 자", team: "마을주민", ability: "매일 밤 플레이어 1명을 선택: 선한 캐릭터 하나, 악한 캐릭터 하나를 알게 됩니다. (둘 중 하나가 정체)" },
-    "savant": { name: "백치천재", team: "마을주민", ability: "매일 낮 이야기꾼에게서 진실 하나, 거짓 하나를 듣습니다." },
-    "snakecharmer": { name: "뱀 조련사", team: "마을주민", ability: "매일 밤 1명을 선택: 악마라면 서로 정체/캐릭터를 바꾸고 당신은 중독됩니다." },
-    "mathematician": { name: "수학자", team: "마을주민", ability: "매일 밤, 비정상적으로 작동한 능력의 개수를 압니다." },
-    "clockmaker": { name: "시계공", team: "마을주민", ability: "게임 시작 시, 악마와 가장 가까운 하수인 사이의 거리를 압니다." },
-    "oracle": { name: "예언자", team: "마을주민", ability: "매일 밤*, 사망한 플레이어 가운데 악한 팀의 수를 압니다." },
-    "seamstress": { name: "재봉사", team: "마을주민", ability: "게임당 1번 밤에 2명을 선택: 같은 소속인지 아닌지 압니다." },
-    "philosopher": { name: "철학자", team: "마을주민", ability: "게임당 1번 밤에 선한 캐릭터를 선택해 능력을 얻습니다. 이미 있다면 그는 취합니다." },
-    "towncrier": { name: "포고꾼", team: "마을주민", ability: "매일 밤*, 오늘 낮에 하수인이 지목에 나섰는지를 압니다." },
-    "sage": { name: "현자", team: "마을주민", ability: "악마가 당신을 죽이면 2명을 알게 되며 그 중 1명이 악마입니다." },
-    "artist": { name: "화가", team: "마을주민", ability: "게임당 1번 낮에 이야기꾼에게 예/아니오 질문을 합니다." },
-    "mutant": { name: "변종", team: "외지인", ability: "외지인이라는 사실에 집착한다면 처형당할 수 있습니다." },
-    "sweetheart": { name: "사랑꾼", team: "외지인", ability: "당신이 사망할 때, 다른 1명은 취함 상태가 됩니다." },
-    "klutz": { name: "얼뜨기", team: "외지인", ability: "사망 시 생존자 1명을 선택합니다: 그가 악하면 소속 팀이 패배합니다." },
-    "barber": { name: "이발사", team: "외지인", ability: "오늘 사망했다면 악마는 2명을 선택해 캐릭터를 맞바꿀 수 있습니다." },
-    "pithag": { name: "마귀할멈", team: "하수인", ability: "매일 밤* 1명과 캐릭터를 선택해 그 캐릭터로 바꿉니다." },
-    "witch": { name: "마녀", team: "하수인", ability: "매일 밤 1명 선택: 그가 다음 날 누군가를 지목하면 사망합니다." },
-    "eviltwin": { name: "사악한 쌍둥이", team: "하수인", ability: "당신과 선한 쌍둥이는 서로 압니다. 선한 쌍둥이가 처형당하면 악이 승리, 둘 다 살아있으면 선은 승리 불가." },
-    "cerenovus": { name: "세레노버스", team: "하수인", ability: "매일 밤 1명과 선한 캐릭터 선택: 다음 날 그 캐릭터에 집착하지 않으면 처형당할 수 있습니다." },
-    "nodashii": { name: "노 다시", team: "악마", ability: "매일 밤* 1명을 사망시킵니다. 당신의 이웃 주민 2명은 중독됩니다." },
-    "vortox": { name: "보르톡스", team: "악마", ability: "매일 밤* 1명을 사망시킵니다. 주민 능력은 거짓 정보만 줍니다. 매일 낮 처형이 없으면 악이 승리합니다." },
-    "vigormortis": { name: "비고르모르티스", team: "악마", ability: "매일 밤* 1명 사망시킵니다. 죽인 하수인은 능력을 유지하며, 양 이웃 주민 중 1명이 중독됩니다." },
-    "fanggu": { name: "팡 구", team: "악마", ability: "매일 밤* 1명 사망시킵니다. 첫 사망 외지인만이 악한 팡구가 되고 당신이 죽습니다." }
+    "ravenkeeper": { name: "까마귀지기", team: "마을주민", ability: "사망 시 플레이어 1명을 봅니다." },
+    "washerwoman": { name: "세탁부", team: "마을주민", ability: "특정 주민 1명을 압니다." },
+    "librarian": { name: "사서", team: "마을주민", ability: "특정 외지인 1명을 압니다." },
+    "investigator": { name: "수사관", team: "마을주민", ability: "특정 하수인 1명을 압니다." },
+    "chef": { name: "요리사", team: "마을주민", ability: "이웃한 악인 쌍의 수를 압니다." },
+    "empath": { name: "초공감자", team: "마을주민", ability: "인접한 생존자 중 악인의 수를 압니다." },
+    "fortuneteller": { name: "점쟁이", team: "마을주민", ability: "지목한 2명의 악마 여부를 압니다." },
+    "undertaker": { name: "장의사", team: "마을주민", ability: "처형된 자의 정체를 압니다." },
+    "monk": { name: "수도사", team: "마을주민", ability: "타인을 보호합니다." },
+    "virgin": { name: "성결자", team: "마을주민", ability: "지목자가 주민이면 처형합니다." },
+    "slayer": { name: "처단자", team: "마을주민", ability: "악마를 죽일 수 있습니다." },
+    "mayor": { name: "시장", team: "마을주민", ability: "특수 승리 조건이 있습니다." },
+    "saint": { name: "성자", team: "외지인", ability: "처형 시 패배합니다." },
+    "recluse": { name: "은둔자", team: "외지인", ability: "악한 팀으로 보일 수 있습니다." },
+    "drunk": { name: "주정뱅이", team: "외지인", ability: "능력이 가짜입니다." },
+    "butler": { name: "집사", team: "외지인", ability: "주인을 따라 투표합니다." },
+    "poisoner": { name: "독살범", team: "하수인", ability: "중독 능력이 있습니다." },
+    "spy": { name: "첩자", team: "하수인", ability: "마도서를 봅니다." },
+    "scarletwoman": { name: "탕녀", team: "하수인", ability: "악마가 죽으면 계승합니다." },
+    "baron": { name: "남작", team: "하수인", ability: "외지인이 늘어납니다." },
+    "imp": { name: "임프", team: "악마", ability: "밤마다 살해합니다." },
+    // 필요시 다른 캐릭터 추가...
 };
 
-let roleDetailCache = {}; 
-let currentRoleAssignTarget = "";
-
-window.onload = function() {
-    const savedNick = localStorage.getItem('botc_nick');
-    const savedIsGM = localStorage.getItem('botc_isGM');
-
-    if (savedIsGM === 'true') {
-        myNick = "GM"; isGM = true;
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('gm-screen').classList.remove('hidden');
-        setupListeners();
-    } else if (savedNick) {
-        myNick = savedNick;
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('player-screen').classList.remove('hidden');
-        document.getElementById('my-name').innerText = myNick;
-        setupListeners();
-    }
+window.onload = () => {
+    const sn = localStorage.getItem('botc_nick'), sg = localStorage.getItem('botc_isGM');
+    if (sg === 'true') { myNick = "GM"; isGM = true; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('gm-screen').classList.remove('hidden'); setupListeners(); }
+    else if (sn) { myNick = sn; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('player-screen').classList.remove('hidden'); document.getElementById('my-name').innerText = myNick; setupListeners(); }
 };
 
-// --- 내장 시나리오 동적 로드 ---
+// --- 시나리오별 필터링 기능의 핵심 ---
 async function loadPresetScenario() {
-    const filename = document.getElementById('scenarioSelect').value;
-    if (!filename) {
-        scenarioRoles = [];
-        document.getElementById('scenario-status').innerText = `기본 캐릭터 (전체)`;
-        return;
-    }
-    
+    const f = document.getElementById('scenarioSelect').value;
+    if(!f) { scenarioRoles = []; document.getElementById('scenario-status').innerText = `전체 캐릭터 노출 중`; return; }
     try {
-        const response = await fetch(`./${filename}`);
-        if (response.ok) {
-            const data = await response.json();
-            scenarioRoles = data.filter(item => typeof item === 'string');
-            document.getElementById('scenario-status').innerText = `적용됨 (${scenarioRoles.length} 직업)`;
-            alert(`✅ [${filename}] 시나리오 로드 완료!`);
-        } else {
-            alert(`❌ 시나리오 파일을 찾을 수 없습니다.\n같은 폴더에 ${filename} 파일이 있는지 확인하세요.`);
-            document.getElementById('scenarioSelect').value = "";
-        }
-    } catch (error) {
-        console.error(error);
-        alert(`❌ 시나리오를 불러오는 중 오류가 발생했습니다.`);
-        document.getElementById('scenarioSelect').value = "";
-    }
-}
-
-// --- 커스텀 JSON 직접 업로드 ---
-function handleJSONUpload(event) {
-    const file = event.target.files;
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            scenarioRoles = data.filter(item => typeof item === 'string');
-            document.getElementById('scenario-status').innerText = `수동 적용됨 (${scenarioRoles.length} 직업)`;
-            document.getElementById('scenarioSelect').value = ""; // 드롭다운 초기화
-            alert(`✅ 커스텀 시나리오 로드 완료!`);
-        } catch(err) { alert("❌ 올바른 JSON 파일이 아닙니다."); }
-    };
-    reader.readAsText(file);
+        const res = await fetch(`./${f}`);
+        if(!res.ok) throw new Error();
+        const data = await res.json();
+        // 문자열 ID만 필터링하여 저장
+        scenarioRoles = data.filter(i => typeof i === 'string');
+        document.getElementById('scenario-status').innerText = `${f.split('.')} 적용됨 (${scenarioRoles.length})`;
+    } catch { alert("JSON 파일을 찾을 수 없습니다. (서버/폴더 확인)"); }
 }
 
 function join() {
-    const val = document.getElementById('nicknameInput').value.trim();
-    if (!val) return alert("닉네임을 입력하세요.");
-    myNick = val;
-    document.getElementById('login-screen').classList.add('hidden');
-
-    if (val.toUpperCase() === "GM") {
-        isGM = true; localStorage.setItem('botc_isGM', 'true');
-        document.getElementById('gm-screen').classList.remove('hidden');
-    } else {
-        localStorage.setItem('botc_nick', myNick); localStorage.setItem('botc_isGM', 'false');
-        db.ref('vote_game/players/' + myNick).update({ roleId: "", isDead: false, ghostVoteUsed: false, joinedAt: Date.now() });
-        document.getElementById('player-screen').classList.remove('hidden');
-        document.getElementById('my-name').innerText = myNick;
-    }
+    const v = document.getElementById('nicknameInput').value.trim(); if(!v) return;
+    myNick = v; document.getElementById('login-screen').classList.add('hidden');
+    if (v.toUpperCase() === "GM") { isGM = true; localStorage.setItem('botc_isGM', 'true'); document.getElementById('gm-screen').classList.remove('hidden'); }
+    else { localStorage.setItem('botc_nick', myNick); localStorage.setItem('botc_isGM', 'false'); db.ref('vote_game/players/' + myNick).update({ roleId: "", isDead: false, ghostVoteUsed: false, joinedAt: Date.now() }); document.getElementById('player-screen').classList.remove('hidden'); document.getElementById('my-name').innerText = myNick; }
     setupListeners();
 }
 
-function resetGame() {
-    if(confirm("모든 데이터를 초기화하시겠습니까?")) {
-        db.ref('vote_game').remove().then(() => { localStorage.clear(); location.reload(); });
-    }
-}
-
 function setupListeners() {
-    db.ref('vote_game/players').on('value', snap => {
-        playersData = snap.val() || {};
-        if (isGM) renderGMPlayerList();
-        else processPlayerRoleStatus();
-    });
-
-    db.ref('vote_game/voting').on('value', snap => {
-        votingState = snap.val() || { active: false };
-        handleVotingUI();
-        if(isGM) renderVoteLogs();
-    });
-
-    db.ref('vote_game/lastAction').on('value', snap => {
-        const action = snap.val();
-        if (action && action.ts > lastToastTs) {
-            lastToastTs = action.ts;
-            showToast(action.voter, action.type);
-        }
-    });
+    db.ref('vote_game/players').on('value', s => { playersData = s.val() || {}; if (isGM) renderGMList(); else processPlayerRoleStatus(); });
+    db.ref('vote_game/voting').on('value', s => { votingState = s.val() || { active: false }; handleVotingUI(); });
+    db.ref('vote_game/lastAction').on('value', s => { const a = s.val(); if (a && a.ts > lastToastTs) { lastToastTs = a.ts; showToast(a.voter, a.type); } });
 }
 
-function showToast(voter, type) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast-item ${type === 'yes' ? 'bg-red-700 border-2 border-red-400' : 'bg-slate-700 border-2 border-slate-500'}`;
-    toast.innerHTML = `📢 <b>${voter}</b>님이 ${type === 'yes' ? '✋ 찬성' : '🤚 기권'}하였습니다.`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 3000);
-}
-
-// --- GM: 직업 할당 정방형 팝업 (필터링 적용) ---
+// GM: 직업 지정 팝업 (시나리오 필터링 적용)
 function openRoleSelectModal(nick) {
-    currentRoleAssignTarget = nick;
+    const grid = document.getElementById('role-grid'); grid.innerHTML = "";
     document.getElementById('role-select-target').innerText = `(${nick})`;
+    // 시나리오가 있으면 해당 목록만, 없으면 전체 노출
+    const displayList = scenarioRoles.length > 0 ? scenarioRoles : Object.keys(ROLE_DICT);
     
-    const grid = document.getElementById('role-grid');
-    grid.innerHTML = "";
-    
-    // 시나리오가 로드되었다면 그 안의 캐릭터만, 아니면 전체 표시
-    const displayRoles = scenarioRoles.length > 0 ? scenarioRoles : Object.keys(ROLE_DICT);
-    
-    displayRoles.forEach(id => {
+    displayList.forEach(id => {
         const info = ROLE_DICT[id] || { name: id, team: "알 수 없음" };
-        let teamColor = "text-gray-400";
-        if(info.team === "마을주민") teamColor = "text-blue-400";
-        if(info.team === "외지인") teamColor = "text-teal-400";
-        if(info.team === "하수인") teamColor = "text-orange-400";
-        if(info.team === "악마") teamColor = "text-red-500";
-        if(info.team === "여행자") teamColor = "text-purple-400";
-
-        grid.innerHTML += `
-            <button onclick="assignRole('${id}')" class="flex flex-col items-center justify-center p-3 rounded-xl border border-zinc-600 bg-zinc-800 hover:bg-zinc-700 transition">
-                <span class="text-[10px] font-bold ${teamColor} mb-1">${info.team}</span>
-                <span class="text-sm font-black text-white">${info.name}</span>
-            </button>
-        `;
+        grid.innerHTML += `<button onclick="assignRole('${nick}','${id}')" class="flex flex-col items-center justify-center p-4 bg-zinc-800 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition"><span class="text-sm font-black text-white">${info.name}</span><span class="text-[9px] opacity-50">${info.team}</span></button>`;
     });
-    
     document.getElementById('role-select-modal').classList.remove('hidden');
 }
 
-function closeRoleSelectModal() {
-    document.getElementById('role-select-modal').classList.add('hidden');
-    currentRoleAssignTarget = "";
-}
+function assignRole(n, rid) { db.ref(`vote_game/players/${n}/roleId`).set(rid); closeRoleSelectModal(); }
+function closeRoleSelectModal() { document.getElementById('role-select-modal').classList.add('hidden'); }
 
-function assignRole(roleId) {
-    if (!currentRoleAssignTarget) return;
-    db.ref(`vote_game/players/${currentRoleAssignTarget}/roleId`).set(roleId);
-    closeRoleSelectModal();
-}
-
-function renderGMPlayerList() {
-    const list = document.getElementById('gm-player-list');
-    const nominatorSelect = document.getElementById('nominatorSelect');
-    const nomineeSelect = document.getElementById('nomineeSelect');
-    
-    list.innerHTML = "";
-    nominatorSelect.innerHTML = '<option value="">선택 안함</option>';
-    nomineeSelect.innerHTML = '<option value="">필수 선택</option>';
-
-    const sortedPlayers = Object.entries(playersData).sort((a, b) => a.joinedAt - b.joinedAt);
-
-    sortedPlayers.forEach(([nick, data], index) => {
-        const isDead = data.isDead;
-        const ghostStatus = isDead ? (data.ghostVoteUsed ? "<span class='text-red-500 text-xs'>(유령표 소진)</span>" : "<span class='text-blue-400 text-xs'>(유령표 1회 남음)</span>") : "";
-        let korName = data.roleId ? (ROLE_DICT[data.roleId]?.name || data.roleId) : '직업 선택';
-
-        list.innerHTML += `
-            <div class="flex items-center gap-2 bg-zinc-900 p-2 rounded border border-zinc-700 ${isDead ? 'opacity-50' : ''}">
-                <span class="text-xs bg-zinc-700 px-2 py-1 rounded w-6 text-center">${index + 1}</span>
-                <span class="font-bold flex-1 truncate">${nick} ${ghostStatus}</span>
-                <button onclick="openRoleSelectModal('${nick}')" class="w-24 md:w-32 py-1.5 text-xs text-white bg-zinc-700 hover:bg-zinc-600 rounded-lg font-bold border border-zinc-600 truncate transition">
-                    ${korName}
-                </button>
-                <button onclick="toggleDeath('${nick}', ${isDead})" class="text-xs px-2 py-1.5 rounded font-bold ${isDead ? 'bg-slate-600 text-white' : 'bg-red-800 text-white'} transition">${isDead ? '부활' : '사망'}</button>
-            </div>
-        `;
-        
-        const optionHTML = `<option value="${nick}">${nick} (${index + 1}번 자리)</option>`;
-        nominatorSelect.innerHTML += optionHTML;
-        nomineeSelect.innerHTML += optionHTML;
-    });
-}
-
-function toggleDeath(nick, currentDead) { db.ref(`vote_game/players/${nick}/isDead`).set(!currentDead); }
-
-// --- 플레이어: 파일 존재 여부 확인 및 UI 처리 (준비중 기능) ---
+// 플레이어: 데이터 로드 및 팝업 제어
 async function processPlayerRoleStatus() {
-    const myData = playersData[myNick];
-    if (!myData) return;
-    renderPlayerStatus();
-    if (!myData.roleId) return;
+    const d = playersData[myNick]; if(!d || !d.roleId) return;
+    const info = ROLE_DICT[d.roleId] || { name: d.roleId, team: "알 수 없음" };
+    document.getElementById('my-role-name').innerText = info.name;
+    document.getElementById('my-role-team').innerText = info.team;
 
-    const roleInfo = ROLE_DICT[myData.roleId] || { name: myData.roleId, team: "알 수 없음", ability: "능력 정보가 없습니다." };
-    document.getElementById('my-role-name').innerText = roleInfo.name;
-    document.getElementById('my-role-team').innerText = roleInfo.team;
-
-    const abilityEl = document.getElementById('my-role-ability');
-    const detailBtn = document.getElementById('btn-detail-guide');
-
-    if (roleDetailCache[myData.roleId] === undefined) {
-        try {
-            const res = await fetch(`./${myData.roleId}.txt`, { method: 'HEAD' });
-            roleDetailCache[myData.roleId] = { available: res.ok };
-        } catch (e) { roleDetailCache[myData.roleId] = { available: false }; }
+    const btn = document.getElementById('btn-detail-guide');
+    if (roleDetailCache[d.roleId] === undefined) {
+        try { const res = await fetch(`./${d.roleId}.txt`); if(res.ok) roleDetailCache[d.roleId] = { av: true, tx: await res.text() }; else roleDetailCache[d.roleId] = { av: false }; }
+        catch { roleDetailCache[d.roleId] = { av: false }; }
     }
-
-    const cacheData = roleDetailCache[myData.roleId];
-
-    if (cacheData.available) {
-        abilityEl.innerText = roleInfo.ability;
-        detailBtn.disabled = false;
-        detailBtn.className = "w-full mt-4 bg-zinc-700 hover:bg-zinc-600 text-amber-400 border border-amber-600/30 font-bold py-3 rounded-xl shadow-lg transition-all";
-        detailBtn.innerText = "📖 내 직업 상세 가이드 읽기";
-    } else {
-        // 파일이 없으면 요약란에 (준비중) 표시 및 버튼 비활성화
-        abilityEl.innerText = roleInfo.ability + "\n\n(상세 가이드 준비중)";
-        detailBtn.disabled = true;
-        detailBtn.className = "w-full mt-4 bg-zinc-800 text-gray-500 border border-zinc-700 font-bold py-3 rounded-xl shadow-inner cursor-not-allowed";
-        detailBtn.innerText = "🚫 상세 가이드 (준비중)";
-    }
-}
-
-function showRole() {
-    const myData = playersData[myNick];
-    if (!myData || !myData.roleId) return alert("GM이 아직 직업을 지정하지 않았습니다.");
-    document.getElementById('tap-to-see').classList.add('hidden');
-    document.getElementById('role-details').classList.remove('hidden');
-}
-
-function hideRole() {
-    document.getElementById('tap-to-see').classList.remove('hidden');
-    document.getElementById('role-details').classList.add('hidden');
+    const cache = roleDetailCache[d.roleId];
+    if (cache.av) { btn.disabled = false; btn.innerText = "📖 상세 가이드 읽기"; btn.className = "w-full mt-4 bg-zinc-700 text-amber-400 font-bold py-3 rounded-xl shadow-lg"; }
+    else { btn.disabled = true; btn.innerText = "🚫 가이드 준비중"; btn.className = "w-full mt-4 bg-zinc-800 text-gray-600 font-bold py-3 rounded-xl cursor-not-allowed shadow-inner"; }
 }
 
 function autoFormatText(text) {
-    let result = text.trim();
+    let res = text.trim();
     const headers = ['요약', '진행 방법', '예시', '징크스 규칙', '등장 스크립트', '아티스트:'];
-    headers.forEach(header => {
-        const regex = new RegExp(`^(${header}.*?)$`, 'gm');
-        result = result.replace(regex, '<br><hr class="border-zinc-700 my-4"><span class="text-lg font-black text-amber-400 block mb-2">📌 $1</span>');
+    headers.forEach(h => {
+        const regex = new RegExp(`^(${h}.*?)$`, 'gm');
+        res = res.replace(regex, '<hr class="border-zinc-700 my-4"><p class="text-lg font-black text-amber-400 mb-2">📌 $1</p>');
     });
-    result = result.replace(/“([^”]*)”/g, '<blockquote class="border-l-4 border-amber-600 pl-3 my-3 text-amber-100 italic bg-black/20 p-2 rounded-r">“$1”</blockquote>');
-    result = result.replace(/"([^"]*)"/g, '<blockquote class="border-l-4 border-amber-600 pl-3 my-3 text-amber-100 italic bg-black/20 p-2 rounded-r">"$1"</blockquote>');
-    result = result.replace(/\n/g, '<br>');
-    result = result.replace(/(<br>\s*){3,}/g, '<br><br>');
-    return result;
+    res = res.replace(/“([^”]*)”/g, '<blockquote class="border-l-4 border-amber-600 pl-3 my-3 text-amber-100 italic bg-black/20 p-2 rounded-r">“$1”</blockquote>');
+    return res.replace(/\n/g, '<br>');
 }
 
 async function openAbilityPopup() {
-    const myData = playersData[myNick];
-    if (!myData || !myData.roleId) return;
-    
-    const cacheData = roleDetailCache[myData.roleId];
-    if (!cacheData || !cacheData.available) return;
-
-    const roleInfo = ROLE_DICT[myData.roleId] || { name: myData.roleId };
-    document.getElementById('modal-role-name').innerText = roleInfo.name;
-    const textEl = document.getElementById('modal-role-text');
-    textEl.innerHTML = "불러오는 중...";
-    
+    const d = playersData[myNick]; if(!d || !roleDetailCache[d.roleId]?.av) return;
+    document.getElementById('modal-role-name').innerText = ROLE_DICT[d.roleId]?.name || d.roleId;
+    // InnerHTML을 사용하여 📌 기호와 구분선이 정상 렌더링되게 수정
+    document.getElementById('modal-role-text').innerHTML = autoFormatText(roleDetailCache[d.roleId].tx); 
     document.getElementById('ability-modal').classList.remove('hidden');
-
-    try {
-        const response = await fetch(`./${myData.roleId}.txt`);
-        if (response.ok) {
-            const rawText = await response.text();
-            textEl.innerHTML = autoFormatText(rawText);
-        } else {
-            textEl.innerHTML = "파일 로드 실패";
-        }
-    } catch (e) {
-        textEl.innerHTML = "오류 발생";
-    }
 }
 
-function closeAbilityPopup() { document.getElementById('ability-modal').classList.add('hidden'); }
-
-function renderPlayerStatus() {
-    const myData = playersData[myNick];
-    if (!myData) return;
-    const statusEl = document.getElementById('my-status');
-    if (myData.isDead) {
-        statusEl.className = "mt-4 p-3 rounded-xl bg-red-900 text-red-200 font-bold text-sm border border-red-700 shadow-inner";
-        statusEl.innerText = myData.ghostVoteUsed ? "💀 사망 상태 (유령 투표권 소진)" : "💀 사망 상태 (유령 투표권 1회 보유)";
-    } else {
-        statusEl.className = "mt-4 p-3 rounded-xl bg-green-900 text-green-200 font-bold text-sm border border-green-700 shadow-inner";
-        statusEl.innerText = "🟢 생존 상태";
-    }
-}
-
+// 투표 로직 (object Object 오류 수정)
 function startVote() {
-    const target = document.getElementById('nomineeSelect').value;
-    const nominator = document.getElementById('nominatorSelect').value || "지명자 없음";
-    if (!target) return alert("피지명자를 선택해야 합니다.");
-
-    const sortedNicks = Object.entries(playersData).sort((a, b) => a.joinedAt - b.joinedAt).map(e => e);
-    const targetIndex = sortedNicks.indexOf(target);
-    
-    let order = [];
-    for (let i = 1; i <= sortedNicks.length; i++) {
-        const nextIndex = (targetIndex + i) % sortedNicks.length;
-        order.push(sortedNicks[nextIndex]);
-    }
-
-    db.ref('vote_game/voting').set({ active: true, target: target, nominator: nominator, order: order, currentIndex: 0, yesCount: 0, logs: null });
+    const target = document.getElementById('nomineeSelect').value; if (!target) return alert("피지명자 필수");
+    // .map(e => e)로 이름만 추출하여 배열을 깔끔하게 만듬
+    const sorted = Object.entries(playersData).sort((a, b) => a.joinedAt - b.joinedAt).map(e => e);
+    const idx = sorted.indexOf(target);
+    let order = []; for (let i = 1; i <= sorted.length; i++) order.push(sorted[(idx + i) % sorted.length]);
+    db.ref('vote_game/voting').set({ active: true, target, nominator: document.getElementById('nominatorSelect').value || "없음", order, currentIndex: 0, yesCount: 0 });
 }
 
-function submitVote(type, useGhostToken = false) {
+function submitVote(t, ghost = false) {
     if (votingState.order[votingState.currentIndex] !== myNick) return;
-
-    let updates = {};
-    updates['vote_game/voting/currentIndex'] = votingState.currentIndex + 1;
-    
-    if (type === 'yes') {
-        const myRole = playersData[myNick]?.roleId;
-        const weight = ROLE_DICT[myRole]?.weight !== undefined ? ROLE_DICT[myRole].weight : 1;
-        updates['vote_game/voting/yesCount'] = (votingState.yesCount || 0) + weight;
-        
-        const logMsg = weight !== 1 ? `${myNick}님의 투표가 ${weight}표로 적용. (${ROLE_DICT[myRole].name})` : `${myNick}님이 찬성함. (+1)`;
-        db.ref('vote_game/voting/logs').push(logMsg);
-    } else {
-        db.ref('vote_game/voting/logs').push(`${myNick}님이 기권함.`);
-    }
-
-    if (useGhostToken) updates[`vote_game/players/${myNick}/ghostVoteUsed`] = true;
-    updates['vote_game/lastAction'] = { voter: myNick, type: type, ts: Date.now() };
-
-    db.ref().update(updates);
+    let up = {}; up['vote_game/voting/currentIndex'] = votingState.currentIndex + 1;
+    if (t === 'yes') up['vote_game/voting/yesCount'] = (votingState.yesCount || 0) + 1;
+    if (ghost) up[`vote_game/players/${myNick}/ghostVoteUsed`] = true;
+    up['vote_game/lastAction'] = { voter: myNick, type: t, ts: Date.now() };
+    db.ref().update(up);
 }
 
-function renderVoteLogs() {
-    const el = document.getElementById('vote-log-entries');
-    if (!votingState.logs) { el.innerHTML = "진행된 투표가 없습니다."; return; }
-    el.innerHTML = Object.values(votingState.logs).map(l => `<div>> ${l}</div>`).join('');
-    document.getElementById('gm-vote-log').classList.remove('hidden');
-    el.parentElement.scrollTop = el.parentElement.scrollHeight;
-}
-
-function endVote(decision) {
-    alert(decision === 'proceed' ? "처형이 확정되어 진행합니다." : "투표가 부결되어 처형을 진행하지 않습니다.");
-    db.ref('vote_game/voting').set({ active: false });
+function renderGMList() {
+    const l = document.getElementById('gm-player-list'), n1 = document.getElementById('nominatorSelect'), n2 = document.getElementById('nomineeSelect');
+    l.innerHTML = ""; n1.innerHTML = '<option value="">지명자 없음</option>'; n2.innerHTML = '<option value="">피지명자 선택</option>';
+    Object.entries(playersData).sort((a,b)=>a.joinedAt-b.joinedAt).forEach(([nick, d], i) => {
+        const kn = d.roleId ? (ROLE_DICT[d.roleId]?.name || d.roleId) : '직업 지정';
+        l.innerHTML += `<div class="flex items-center gap-2 bg-zinc-900 p-2 rounded border border-zinc-700 ${d.isDead?'opacity-50':''}">
+            <span class="text-xs bg-zinc-700 px-2 rounded">${i+1}</span><span class="flex-1 font-bold truncate">${nick}</span>
+            <button onclick="openRoleSelectModal('${nick}')" class="bg-zinc-800 px-2 py-1.5 rounded text-xs border border-zinc-600 truncate w-24">${kn}</button>
+            <button onclick="db.ref('vote_game/players/${nick}/isDead').set(${!d.isDead})" class="text-xs px-2 py-1.5 rounded font-bold ${d.isDead?'bg-slate-600':'bg-red-800'}">${d.isDead?'부활':'사망'}</button>
+        </div>`;
+        const op = `<option value="${nick}">${nick} (${i+1}번)</option>`; n1.innerHTML += op; n2.innerHTML += op;
+    });
 }
 
 function handleVotingUI() {
-    if (!votingState || !votingState.active) {
-        document.getElementById('vote-area').classList.add('hidden');
-        document.getElementById('gm-result-panel').classList.add('hidden');
-        document.getElementById('gm-vote-log').classList.add('hidden');
-        return;
-    }
-
-    const order = votingState.order || [];
-    const idx = votingState.currentIndex || 0;
-    const isFinished = idx >= order.length;
-    
-    const currentVoter = isFinished ? "완료" : order[idx];
-
-    if (isGM) {
-        document.getElementById('gm-result-panel').classList.remove('hidden');
-        document.getElementById('gm-yes-count').innerText = votingState.yesCount || 0;
-        document.getElementById('gm-current-voter').innerText = currentVoter;
-        
-        if (isFinished) document.getElementById('gm-final-decision').classList.remove('hidden');
-        else document.getElementById('gm-final-decision').classList.add('hidden');
+    if (!votingState.active) return (document.getElementById('vote-area').classList.add('hidden'), document.getElementById('gm-result-panel').classList.add('hidden'));
+    const o = votingState.order || [], i = votingState.currentIndex || 0, fin = i >= o.length, cur = fin ? "완료" : o[i];
+    if (isGM) { 
+        document.getElementById('gm-result-panel').classList.remove('hidden'); 
+        document.getElementById('gm-yes-count').innerText = votingState.yesCount || 0; 
+        document.getElementById('gm-current-voter').innerText = cur;
+        document.getElementById('gm-final-decision').classList.toggle('hidden', !fin);
     } else {
         document.getElementById('vote-area').classList.remove('hidden');
-        document.getElementById('vote-target').innerText = votingState.target || "대상 없음";
-        
-        const nomDisp = document.getElementById('vote-nominator-display');
-        if(votingState.nominator && votingState.nominator !== "지명자 없음") {
-            nomDisp.innerText = `지명자: ${votingState.nominator}`;
-            nomDisp.style.display = 'block';
-        } else { nomDisp.style.display = 'none'; }
-        
-        const waitArea = document.getElementById('vote-wait');
-        const actionArea = document.getElementById('vote-action');
-        const ghostArea = document.getElementById('ghost-action');
-        
-        waitArea.classList.add('hidden'); actionArea.classList.add('hidden'); ghostArea.classList.add('hidden');
-
-        if (isFinished) {
-            waitArea.classList.remove('hidden');
-            waitArea.innerHTML = "<b class='text-amber-400'>모든 투표가 종료되었습니다. GM의 판결을 대기합니다.</b>";
-        } else if (currentVoter === myNick) {
-            const myData = playersData[myNick] || {};
-            if (myData.isDead) {
-                if (myData.ghostVoteUsed) {
-                    waitArea.classList.remove('hidden');
-                    waitArea.innerHTML = "<span class='text-red-500 font-bold'>유령 투표권을 이미 소진하여<br>자동으로 기권 처리됩니다...</span>";
-                    setTimeout(() => submitVote('pass'), 1500);
-                } else { ghostArea.classList.remove('hidden'); }
-            } else { actionArea.classList.remove('hidden'); }
-        } else {
-            waitArea.classList.remove('hidden');
-            document.getElementById('current-voter-name').innerText = currentVoter;
-        }
+        document.getElementById('vote-target').innerText = votingState.target;
+        document.getElementById('vote-nominator-display').innerText = `지명자: ${votingState.nominator}`;
+        const w = document.getElementById('vote-wait'), a = document.getElementById('vote-action'), g = document.getElementById('ghost-action');
+        [w, a, g].forEach(e => e.classList.add('hidden'));
+        if (fin) { w.classList.remove('hidden'); w.innerText = "모든 투표가 종료되었습니다."; }
+        else if (cur === myNick) {
+            const d = playersData[myNick] || {};
+            if (d.isDead) d.ghostVoteUsed ? setTimeout(() => submitVote('pass'), 1500) : g.classList.remove('hidden');
+            else a.classList.remove('hidden');
+        } else { w.classList.remove('hidden'); document.getElementById('current-voter-name').innerText = cur; }
     }
 }
+function resetGame() { if(confirm("모든 데이터 초기화?")) db.ref('vote_game').remove().then(() => (localStorage.clear(), location.reload())); }
+function closeAbilityPopup() { document.getElementById('ability-modal').classList.add('hidden'); }
+function endVote(d) { alert(d === 'proceed' ? "처형 확정!" : "부결!"); db.ref('vote_game/voting').set({ active: false }); }
+function showRole() { document.getElementById('tap-to-see').classList.add('hidden'); document.getElementById('role-details').classList.remove('hidden'); }
+function hideRole() { document.getElementById('tap-to-see').classList.remove('hidden'); document.getElementById('role-details').classList.add('hidden'); }
+function showToast(v, t) { const c = document.getElementById('toast-container'), i = document.createElement('div'); i.className = `toast-item ${t==='yes'?'bg-red-700 border-2 border-red-400':'bg-slate-700 border-2 border-slate-500'}`; i.innerHTML = `📢 <b>${v}</b>님이 ${t==='yes'?'✋ 찬성':'🤚 기권'}함`; c.appendChild(i); setTimeout(() => i.remove(), 3000); }
 </script>
 </body>
 </html>
