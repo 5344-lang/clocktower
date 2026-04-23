@@ -33,7 +33,6 @@
 <body class="p-4 md:p-8 min-h-screen flex flex-col items-center relative">
 
 <div id="toast-container"></div>
-<datalist id="role-options"></datalist>
 
 <div id="login-screen" class="w-full max-w-md mt-20 text-center">
     <h1 class="text-4xl font-black text-red-600 mb-2">처형 투표소</h1>
@@ -49,11 +48,25 @@
     </div>
 
     <div class="bg-zinc-800 p-5 rounded-xl mb-6 shadow-xl border border-zinc-700">
-        <div class="flex justify-between items-center mb-2 border-b border-zinc-600 pb-2">
-            <h3 class="text-lg font-bold text-gray-200">📜 시나리오 JSON 업로드</h3>
+        <div class="flex justify-between items-center mb-4 border-b border-zinc-600 pb-2">
+            <h3 class="text-lg font-bold text-gray-200">📜 시나리오 설정</h3>
             <span id="scenario-status" class="text-xs text-amber-400 font-bold">기본 캐릭터 (전체)</span>
         </div>
-        <input type="file" id="jsonUpload" accept=".json" onchange="handleJSONUpload(event)" class="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-red-900 file:text-white hover:file:bg-red-800 cursor-pointer">
+        
+        <div class="mb-4">
+            <label class="text-xs text-gray-400 font-bold mb-1 block">내장 시나리오 불러오기</label>
+            <select id="scenarioSelect" onchange="loadPresetScenario()" class="w-full p-3 rounded-lg text-black font-bold cursor-pointer">
+                <option value="">-- 시나리오 선택 --</option>
+                <option value="trouble_brewing.json">불길한 조짐 (Trouble Brewing)</option>
+                <option value="bad_moon_rising.json">어둠을 부르는 달 (Bad Moon Rising)</option>
+                <option value="sects_and_violets.json">점철되는 혼란 (Sects and Violets)</option>
+            </select>
+        </div>
+        
+        <div class="border-t border-zinc-700 pt-3 mt-2">
+            <p class="text-[11px] text-gray-500 mb-1">또는 커스텀 JSON 직접 업로드:</p>
+            <input type="file" id="jsonUpload" accept=".json" onchange="handleJSONUpload(event)" class="text-sm text-gray-400 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-zinc-700 file:text-white hover:file:bg-zinc-600 cursor-pointer">
+        </div>
     </div>
 
     <div class="bg-zinc-800 p-5 rounded-xl mb-6 shadow-xl border border-zinc-700">
@@ -180,11 +193,11 @@ let votingState = { active: false };
 let lastToastTs = Date.now();
 let scenarioRoles = []; 
 
-// 직업 사전 (여행자 가중치 포함)
+// 직업 사전
 const ROLE_DICT = {
     "bureaucrat": { name: "관료", team: "여행자", weight: 3, ability: "당신의 투표는 3표로 계산됩니다." },
     "thief": { name: "도둑", team: "여행자", weight: -1, ability: "당신의 투표는 -1표로 계산됩니다." },
-    "soldier": { name: "군인", team: "마 마을주민", ability: "악마로부터 안전합니다." },
+    "soldier": { name: "군인", team: "마을주민", ability: "악마로부터 안전합니다." },
     "ravenkeeper": { name: "까마귀지기", team: "마을주민", ability: "밤에 사망하면, 깨어나서 플레이어 1명을 선택합니다: 그의 캐릭터를 알게 됩니다." },
     "librarian": { name: "사서", team: "마을주민", ability: "게임 시작 시, 플레이어 2명 중 1명이 특정 외지인임을 알게 됩니다." },
     "virgin": { name: "성결자", team: "마을주민", ability: "처음으로 지목당했을 때, 당신을 지목한 플레이어가 주민이라면, 그는 즉시 처형당합니다." },
@@ -195,7 +208,7 @@ const ROLE_DICT = {
     "chef": { name: "요리사", team: "마을주민", ability: "게임 시작 시, 서로 이웃하게 앉은 악한 플레이어가 몇 쌍 있는지 알게 됩니다." },
     "undertaker": { name: "장의사", team: "마을주민", ability: "매일 밤*, 오늘 낮에 처형으로 사망한 플레이어의 캐릭터를 알게 됩니다." },
     "fortuneteller": { name: "점쟁이", team: "마을주민", ability: "매일 밤, 플레이어 2명을 선택합니다: 그중 악마가 있는지 알게 됩니다." },
-    "slayer": { name: "처단자", team: "마 마을주민", ability: "게임당 1번, 낮 동안, 공개적으로 플레이어 1명을 선택합니다: 그가 악마면 그는 사망합니다." },
+    "slayer": { name: "처단자", team: "마을주민", ability: "게임당 1번, 낮 동안, 공개적으로 플레이어 1명을 선택합니다: 그가 악마면 그는 사망합니다." },
     "empath": { name: "초공감자", team: "마을주민", ability: "매일 밤, 이웃 생존자 2명 중 몇 명이나 악한지를 알게 됩니다." },
     "saint": { name: "성자", team: "외지인", ability: "당신이 처형으로 사망하면, 당신이 속한 팀이 패배합니다." },
     "recluse": { name: "은둔자", team: "외지인", ability: "당신은 악한 팀 소속의 특정 하수인 또는 악마로 위장될 수도 있습니다." },
@@ -279,6 +292,34 @@ window.onload = function() {
     }
 };
 
+// --- 내장 시나리오 동적 로드 ---
+async function loadPresetScenario() {
+    const filename = document.getElementById('scenarioSelect').value;
+    if (!filename) {
+        scenarioRoles = [];
+        document.getElementById('scenario-status').innerText = `기본 캐릭터 (전체)`;
+        return;
+    }
+    
+    try {
+        const response = await fetch(`./${filename}`);
+        if (response.ok) {
+            const data = await response.json();
+            scenarioRoles = data.filter(item => typeof item === 'string');
+            document.getElementById('scenario-status').innerText = `적용됨 (${scenarioRoles.length} 직업)`;
+            alert(`✅ [${filename}] 시나리오 로드 완료!`);
+        } else {
+            alert(`❌ 시나리오 파일을 찾을 수 없습니다.\n같은 폴더에 ${filename} 파일이 있는지 확인하세요.`);
+            document.getElementById('scenarioSelect').value = "";
+        }
+    } catch (error) {
+        console.error(error);
+        alert(`❌ 시나리오를 불러오는 중 오류가 발생했습니다.`);
+        document.getElementById('scenarioSelect').value = "";
+    }
+}
+
+// --- 커스텀 JSON 직접 업로드 ---
 function handleJSONUpload(event) {
     const file = event.target.files;
     if (!file) return;
@@ -287,8 +328,9 @@ function handleJSONUpload(event) {
         try {
             const data = JSON.parse(e.target.result);
             scenarioRoles = data.filter(item => typeof item === 'string');
-            document.getElementById('scenario-status').innerText = `적용됨 (${scenarioRoles.length} 직업)`;
-            alert(`✅ 시나리오 로드 완료!`);
+            document.getElementById('scenario-status').innerText = `수동 적용됨 (${scenarioRoles.length} 직업)`;
+            document.getElementById('scenarioSelect').value = ""; // 드롭다운 초기화
+            alert(`✅ 커스텀 시나리오 로드 완료!`);
         } catch(err) { alert("❌ 올바른 JSON 파일이 아닙니다."); }
     };
     reader.readAsText(file);
@@ -349,7 +391,7 @@ function showToast(voter, type) {
     setTimeout(() => { toast.remove(); }, 3000);
 }
 
-// --- GM: 직업 할당 팝업 시스템 (정방형 버튼) ---
+// --- GM: 직업 할당 정방형 팝업 (필터링 적용) ---
 function openRoleSelectModal(nick) {
     currentRoleAssignTarget = nick;
     document.getElementById('role-select-target').innerText = `(${nick})`;
@@ -357,6 +399,7 @@ function openRoleSelectModal(nick) {
     const grid = document.getElementById('role-grid');
     grid.innerHTML = "";
     
+    // 시나리오가 로드되었다면 그 안의 캐릭터만, 아니면 전체 표시
     const displayRoles = scenarioRoles.length > 0 ? scenarioRoles : Object.keys(ROLE_DICT);
     
     displayRoles.forEach(id => {
@@ -425,7 +468,7 @@ function renderGMPlayerList() {
 
 function toggleDeath(nick, currentDead) { db.ref(`vote_game/players/${nick}/isDead`).set(!currentDead); }
 
-// --- 플레이어: 텍스트 파일 체크 및 UI 처리 ---
+// --- 플레이어: 파일 존재 여부 확인 및 UI 처리 (준비중 기능) ---
 async function processPlayerRoleStatus() {
     const myData = playersData[myNick];
     if (!myData) return;
@@ -441,10 +484,9 @@ async function processPlayerRoleStatus() {
 
     if (roleDetailCache[myData.roleId] === undefined) {
         try {
-            const res = await fetch(`./${myData.roleId}.txt`);
-            if (res.ok) roleDetailCache[myData.roleId] = { available: true, text: await res.text() };
-            else roleDetailCache[myData.roleId] = { available: false, text: "" };
-        } catch (e) { roleDetailCache[myData.roleId] = { available: false, text: "" }; }
+            const res = await fetch(`./${myData.roleId}.txt`, { method: 'HEAD' });
+            roleDetailCache[myData.roleId] = { available: res.ok };
+        } catch (e) { roleDetailCache[myData.roleId] = { available: false }; }
     }
 
     const cacheData = roleDetailCache[myData.roleId];
@@ -455,6 +497,7 @@ async function processPlayerRoleStatus() {
         detailBtn.className = "w-full mt-4 bg-zinc-700 hover:bg-zinc-600 text-amber-400 border border-amber-600/30 font-bold py-3 rounded-xl shadow-lg transition-all";
         detailBtn.innerText = "📖 내 직업 상세 가이드 읽기";
     } else {
+        // 파일이 없으면 요약란에 (준비중) 표시 및 버튼 비활성화
         abilityEl.innerText = roleInfo.ability + "\n\n(상세 가이드 준비중)";
         detailBtn.disabled = true;
         detailBtn.className = "w-full mt-4 bg-zinc-800 text-gray-500 border border-zinc-700 font-bold py-3 rounded-xl shadow-inner cursor-not-allowed";
@@ -488,7 +531,7 @@ function autoFormatText(text) {
     return result;
 }
 
-function openAbilityPopup() {
+async function openAbilityPopup() {
     const myData = playersData[myNick];
     if (!myData || !myData.roleId) return;
     
@@ -497,8 +540,22 @@ function openAbilityPopup() {
 
     const roleInfo = ROLE_DICT[myData.roleId] || { name: myData.roleId };
     document.getElementById('modal-role-name').innerText = roleInfo.name;
-    document.getElementById('modal-role-text').innerHTML = autoFormatText(cacheData.text);
+    const textEl = document.getElementById('modal-role-text');
+    textEl.innerHTML = "불러오는 중...";
+    
     document.getElementById('ability-modal').classList.remove('hidden');
+
+    try {
+        const response = await fetch(`./${myData.roleId}.txt`);
+        if (response.ok) {
+            const rawText = await response.text();
+            textEl.innerHTML = autoFormatText(rawText);
+        } else {
+            textEl.innerHTML = "파일 로드 실패";
+        }
+    } catch (e) {
+        textEl.innerHTML = "오류 발생";
+    }
 }
 
 function closeAbilityPopup() { document.getElementById('ability-modal').classList.add('hidden'); }
@@ -516,13 +573,11 @@ function renderPlayerStatus() {
     }
 }
 
-// --- 투표 및 가중치(로그) 기능 ---
 function startVote() {
     const target = document.getElementById('nomineeSelect').value;
     const nominator = document.getElementById('nominatorSelect').value || "지명자 없음";
     if (!target) return alert("피지명자를 선택해야 합니다.");
 
-    // [object Object] 에러 방지된 배열 구조
     const sortedNicks = Object.entries(playersData).sort((a, b) => a.joinedAt - b.joinedAt).map(e => e);
     const targetIndex = sortedNicks.indexOf(target);
     
@@ -546,7 +601,6 @@ function submitVote(type, useGhostToken = false) {
         const weight = ROLE_DICT[myRole]?.weight !== undefined ? ROLE_DICT[myRole].weight : 1;
         updates['vote_game/voting/yesCount'] = (votingState.yesCount || 0) + weight;
         
-        // GM용 실시간 로그 기록
         const logMsg = weight !== 1 ? `${myNick}님의 투표가 ${weight}표로 적용. (${ROLE_DICT[myRole].name})` : `${myNick}님이 찬성함. (+1)`;
         db.ref('vote_game/voting/logs').push(logMsg);
     } else {
@@ -564,7 +618,7 @@ function renderVoteLogs() {
     if (!votingState.logs) { el.innerHTML = "진행된 투표가 없습니다."; return; }
     el.innerHTML = Object.values(votingState.logs).map(l => `<div>> ${l}</div>`).join('');
     document.getElementById('gm-vote-log').classList.remove('hidden');
-    el.parentElement.scrollTop = el.parentElement.scrollHeight; // 스크롤 맨 아래로 유지
+    el.parentElement.scrollTop = el.parentElement.scrollHeight;
 }
 
 function endVote(decision) {
